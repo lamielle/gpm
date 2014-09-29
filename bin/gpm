@@ -38,6 +38,24 @@ is_in_use() {
   [[ -e "$1/.git/index.lock" || -e "$1/.hg/store/lock"  || -e "$1/.bzr/checkout/lock" ]]
 }
 
+get_package() {
+  local package=$1
+
+  # Support cloning private Git repos
+  if [ "${package:(-4)}" == ".git" ]
+  then
+    local pkg_path=$(echo "$package" | awk -F/ '{print $1"/"$2"/"$3}' | sed 's/.git$//')
+    local repo_path=$(echo "$package" | awk -F/ '{print $1":"$2"/"$3}')
+    local full_path=$GOPATH/src/$pkg_path
+    if [ ! -d $full_path ]
+    then
+      git clone git@$repo_path $full_path
+    fi
+  else
+    go get -u -d "$package"
+  fi
+}
+
 # Iterates over Godep file dependencies and sets
 # the specified version on each of them.
 set_dependencies() {
@@ -46,14 +64,14 @@ set_dependencies() {
   while read package version; do
     (
       echo ">> Getting package "$package""
-      go get -u -d "$package"
+      get_package "$package"
     ) &
   done < <(echo "$deps")
   wait
 
   while read package version; do
     (
-      local pkg_path=$(echo "$package" | awk -F/ '{print $1"/"$2"/"$3}')
+      local pkg_path=$(echo "$package" | awk -F/ '{print $1"/"$2"/"$3}' | sed 's/.git$//')
       local install_path="${GOPATH%%:*}/src/${pkg_path%%/...}"
       echo ">> Setting $package to version $version"
       cd $install_path

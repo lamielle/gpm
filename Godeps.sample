@@ -5,6 +5,9 @@ github.com/replicon/fast-archiver         v1.02
 # Subpackages
 github.com/garyburd/redigo/redis          a6a0a737c00caf4d4c2bb589941ace0d688168bb
 
+# Private Git Repo
+# github.com/user/private.git <hash>
+
 # Bazaar Repo
 launchpad.net/gocheck                     r2013.03.03
 
